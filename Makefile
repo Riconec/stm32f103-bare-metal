@@ -17,7 +17,7 @@ BUILD_DIR = build
 
 # Add linker script
 LD_SCRIPT = f103_64k.ld
-LD_FLAGS = -T $(LD_SCRIPT)
+LD_FLAGS = -T ./source/$(LD_SCRIPT)
 
 SOURCES_S = f103_startup.s
 SOURCES_C =
@@ -40,7 +40,7 @@ $(OBJECTS_C):
 
 $(PROJ_NAME).elf: $(OBJECTS_S) $(OBJECTS_C)
 	@echo Linking output $@
-	$(ECHO)$(LD) -o ./$(BUILD_DIR)/$(PROJ_NAME).elf -T ./source/$(LD_SCRIPT) ./$(BUILD_DIR)/obj/$(OBJECTS_S)
+	$(ECHO)$(LD) -o ./$(BUILD_DIR)/$(PROJ_NAME).elf $(LD_FLAGS) ./$(BUILD_DIR)/obj/$(OBJECTS_S)
 
 $(PROJ_NAME).bin: $(PROJ_NAME).elf
 	@echo Generating output binary $@
