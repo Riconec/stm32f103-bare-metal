@@ -17,42 +17,39 @@ BUILD_DIR = build
 
 # Add linker script
 LD_SCRIPT = f103_64k.ld
-LD_FLAGS = -T ./source/$(LD_SCRIPT)
+LD_FLAGS = -T source/$(LD_SCRIPT)
 
-SOURCES_S = f103_startup.s
-SOURCES_C =
+SOURCES = f103_startup.s
 
-OBJECTS_S = $(SOURCES_S:.s=.o)
-OBJECTS_C = $(SOURCES_C:.c=.o)
+OBJECTS  = $(patsubst %.s, $(BUILD_DIR)/obj/%.o, $(filter %.s, $(SOURCES)))
+OBJECTS += $(patsubst %.c, $(BUILD_DIR)/obj/%.o, $(filter %.c, $(SOURCES)))
+
+.PHONY: all build makedir clean
 
 all: makedir build
 	@echo "Build completed"
 
-build: $(PROJ_NAME).bin $(PROJ_NAME).hex $(PROJ_NAME).lss
+build: $(BUILD_DIR)/$(PROJ_NAME).bin $(BUILD_DIR)/$(PROJ_NAME).hex $(BUILD_DIR)/$(PROJ_NAME).lss
 
-$(OBJECTS_S):
+$(BUILD_DIR)/obj/%.o: source/%.s
 	@echo Building asm file $< to $@
-	$(ECHO)$(AS) -o ./$(BUILD_DIR)/obj/$(OBJECTS_S) ./source/$(SOURCES_S)
+	$(ECHO)$(AS) $< -o $@
 
-$(OBJECTS_C):
-	@echo Building C file $< to $@
-	$(ECHO)$(GCC) -o ./$(BUILD_DIR)/obj/$(OBJECTS_C) ./source/$(SOURCES_C)
+$(BUILD_DIR)/$(PROJ_NAME).elf: $(OBJECTS)
+	@echo Linking output $< into $@
+	$(ECHO)$(LD) -o $@ $(LD_FLAGS) $<
 
-$(PROJ_NAME).elf: $(OBJECTS_S) $(OBJECTS_C)
-	@echo Linking output $@
-	$(ECHO)$(LD) -o ./$(BUILD_DIR)/$(PROJ_NAME).elf $(LD_FLAGS) ./$(BUILD_DIR)/obj/$(OBJECTS_S)
-
-$(PROJ_NAME).bin: $(PROJ_NAME).elf
+$(BUILD_DIR)/$(PROJ_NAME).bin: $(BUILD_DIR)/$(PROJ_NAME).elf
 	@echo Generating output binary $@
-	$(ECHO)$(OBJ_COPY) ./$(BUILD_DIR)/$(PROJ_NAME).elf ./$(BUILD_DIR)/$(PROJ_NAME).bin -O binary
+	$(ECHO)$(OBJ_COPY) $< $@ -O binary
 
-$(PROJ_NAME).hex: $(PROJ_NAME).elf
+$(BUILD_DIR)/$(PROJ_NAME).hex: $(BUILD_DIR)/$(PROJ_NAME).elf
 	@echo Generating output hex $@
-	$(ECHO)$(OBJ_COPY) ./$(BUILD_DIR)/$(PROJ_NAME).elf ./$(BUILD_DIR)/$(PROJ_NAME).bin -O ihex
+	$(ECHO)$(OBJ_COPY) $< $@ -O ihex
 
-$(PROJ_NAME).lss: $(PROJ_NAME).elf
+$(BUILD_DIR)/$(PROJ_NAME).lss: $(BUILD_DIR)/$(PROJ_NAME).elf
 	@echo Generating listing $@
-	$(ECHO)$(OBJ_DUMP) -S ./$(BUILD_DIR)/$(PROJ_NAME).elf > ./$(BUILD_DIR)/$(PROJ_NAME).lss
+	$(ECHO)$(OBJ_DUMP) -S $< > $@
 
 makedir:
 	@mkdir -p ./build
